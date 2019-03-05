@@ -1,5 +1,5 @@
-TournamentID TeamID registered registration_date(estimate) registration_date(estimate) comment
-481 49 0 2019-05-03 20:00 Jena-Gossenhauer
-482 49 0 2019-04-01 10:00 Bamberg-Gossenhauer
-482 624 0 2019-04-01 10:00 Bamberg-Flossenhauer
-472 49 1 2019-03-02 09:00 schon_vorbei
+TournamentID TeamID registration_date(estimate) registration_date(estimate) comment
+481 49 2019-05-03 20:00 Jena-Gossenhauer
+482 49 2019-04-01 10:00 Bamberg-Gossenhauer
+482 624 2019-04-01 10:00 Bamberg-Flossenhauer
+472 49 2019-03-02 09:00 schon_vorbei
