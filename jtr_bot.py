@@ -1,8 +1,11 @@
-# python2 libraries; change the urllib libraries for python3
+# python2 libraries (mechanize)
 
-#import requests
-#import urllib
-#import urllib2
+import os
+import numpy as np
+
+import time
+import datetime
+
 import webbrowser
 import mechanize
 
@@ -10,19 +13,6 @@ import smtplib
 import time
 import imaplib
 import email
-
-def find_captcha():
-    infile = open("results.html",'r')
-    d = infile.readlines()
-    for i in range(len(d)):
-        try:
-            if d[i].split()[7] == 'name="control"':
-                #print(d[i].split()[0]+d[i].split()[1]+d[i].split()[2])
-                #captcha_val = solve_captcha(d[i].split()[0],d[i].split()[1],d[i].split()[2])
-                return solve_captcha(d[i].split()[0],d[i].split()[1],d[i].split()[2])
-        except:
-            continue
-
 
 def solve_captcha(i,op,j):
     if op=='+':
@@ -43,15 +33,17 @@ def register(tournament_id,team_id,email):
     infile = open('results.html','r') # besser machen ohne file input output
     d = infile.readlines()
     infile.close()
+    os.remove('results.html')
     for i in range(len(d)):
         #try:
-        #    if d[i].split()[2] == 'name="control_val"':
+        #    if d[i].split()[2] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
         #        print(d[i].split()[3][7:-1])
         #except:
         #    continue
         try:
             if d[i].split()[7] == 'name="control"':
                 captcha_value = solve_captcha(d[i].split()[0],d[i].split()[1],d[i].split()[2])
+                break
         except:
             continue
         
@@ -69,9 +61,10 @@ def register(tournament_id,team_id,email):
     infile = open('results_submit.html','r')
     d = infile.readlines()
     infile.close()
+    os.remove('results_submit.html')
     #for i in range(len(d)):
     #    try:
-    #        if d[i].split()[2] == 'name="control_val"':
+    #        if d[i].split()[2] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
     #            print(d[i].split()[3][7:-1])
     #    except:
     #        continue
@@ -88,7 +81,7 @@ def register(tournament_id,team_id,email):
         except:
             continue
 
-def TEST_receive_mail_from_gmail(): # this one works!!!
+def TEST_receive_mail_from_gmail():
     # note: mails stay in inbox after reading. will have to works with the id, I guess ...
     # 'https://codehandbook.org/how-to-read-email-from-gmail-using-python/'
     
@@ -118,8 +111,8 @@ def TEST_receive_mail_from_gmail(): # this one works!!!
                     msg = email.message_from_string(response_part[1])
                     email_subject = msg['subject']
                     email_from = msg['from']
-                    #print('From : ' + email_from + '\n') # sent from; should be 'notify@turniere.jugger.org'
-                    #print('Subject : ' + email_subject + '\n')
+                    #print('From : ' + email_from + '\n') # sent from; should be 'notify@turniere.jugger.org' -> check
+                    #print('Subject : ' + email_subject + '\n') -> identify right email with this?
                     #print(msg.get_payload()[0]) # text, signature, stuff (my emails; JTR is string from the beginning)
                     print(extract_link_from_text( str(msg.get_payload()) ))
                     #print(msg['Received']) # time received email (+stuff); send time not accessible
@@ -170,13 +163,13 @@ def click_email_link():
     
     return 0
 
-def get_register_time_from_jtr():
+def get_register_time_from_jtr(tournament_id):
     # maybe integrate with normal registering function?
     url = 'https://turniere.jugger.org/tournament.signin.php?id='+str(tournament_id)
     br = mechanize.Browser()
     br.set_handle_robots(False) # ignore robots
     
-    # solve captcha
+    # get date and time to register
     response = br.open(url)
     with open('results.html','w') as f:
         f.write(response.read())
@@ -184,48 +177,108 @@ def get_register_time_from_jtr():
     infile = open('results.html','r') # besser machen ohne file input output
     d = infile.readlines()
     infile.close()
+    os.remove('results.html')
     for i in range(len(d)):
         try:
-            if d[i].split()[7] == 'name="control"':
-                captcha_value = solve_captcha(d[i].split()[0],d[i].split()[1],d[i].split()[2])
+            if d[i].split()[1] == 'class="content">':
+                date_string = d[i+1].split()[10]
+                time_string = d[i+1].split()[11]
+                # turn into datetime type
+                return datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M')
         except:
             continue
         
+    return datetime.datetime.now()-datetime.timedelta(days=1) # registration already open
     
-    return register_time
+    
+
+def read_tournament_table(filename):
+    infile = open(filename,'r') # besser machen ohne file input output
+    lines = infile.readlines()
+    infile.close()
+    
+    #TournamentID TeamID registered registration_date(estimate) registration_date(estimate) comment
+    tournamentID = np.zeros(len(lines)-1,dtype=np.int16)
+    teamID = np.zeros(len(lines)-1,dtype=np.int16)
+    date_estimate = []
+    time_estimate = []
+    comment = []
+    
+    for i,line in enumerate(lines):
+        if i==0: # remove column header
+            continue
+        
+        tournamentID[i-1] = line.split()[0]
+        teamID[i-1] = line.split()[1]
+        date_estimate.append(line.split()[2])
+        time_estimate.append(line.split()[3])
+        comment.append(line.split()[4])
+    
+    return tournamentID,teamID,date_estimate,time_estimate,comment
+    
+def wait_time(now,register_datetime): # return time to wait (in seconds)
+    fac = 0.9
+    tot = 10
+    
+    time_from_now = (register_datetime-now).days*24*60*60+(register_datetime-now).seconds
+    
+    return int(time_from_now*fac)-tot
 
 ### todo
-# run in background, monitor walltime (system / web source)
-# have list of tournaments, with team_name, registration time (in file to read regularly?)
-# trigger registration event
 # check inbox and confirm link (to complete registration) geht eventuell auch ohne, ueber den "key" aus dem link == control_val ?
 # maybe have some kind of logfile?
 
-# trigger
-# register tournament (verify)
-# loop: wait some time, check for mail (verify the correct mail)
-# use link
-
-#register data: datetime, tournamentID, teamID, success?
-# try to get datetime from jtr website to be sure to have the right one -> same url as register, but: 
-#<div class="content">
-#    <p>Die Anmeldung zu diesem Turnier ist erst ab dem [ 2019-04-01 10:00 Uhr ] m&ouml;glich.</p> # format = yyyy-mm-dd time
-
 #https://docs.python.org/3/library/datetime.html
-import time
-import datetime
+
+### starting routine of bot
+start_time = datetime.datetime.now() # get current time
+
+tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
+
+reg_datetime = [] # figure out registration times from jtr
+time_left = np.zeros(len(tournamentID)) # in seconds (should be good enough)
+for i in range(len(tournamentID)):
+    reg_datetime.append(get_register_time_from_jtr(tournamentID[i]))
+    time_left[i] = (reg_datetime[i]-start_time).days*24*60*60+(reg_datetime[i]-start_time).seconds
+
+tournamentID = tournamentID[time_left>0] # remove events from the past
+teamID = teamID[time_left>0]
+time_left = time_left[time_left>0]
+
+t_order = time_left.argsort() # sort for most urgent events
+
+# start waiting with checks for time, forwarding emails
+for i in range(len(tournamentID)): # for loop over future tournaments from list
+    # wait for some % (90%) of wait_time, repeat; aim for some (10) seconds before reg_time
+    t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
+    while t > 0:
+        time.sleep(t)
+        t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
+    
+    # start trying to register every second (or so); verify
+    while register(tournament_id,team_id,email)==False:
+        time.sleep(1)
+    
+    # loop: wait some time, check for mail (verify the correct mail)
+    
+    
+    # use link
+    
+
+
+
 
 #d = timedelta(microseconds=1010000)
 #print(d.total_seconds())
 
-print(datetime.date.today())
-for i in range(10):
-    print(datetime.datetime.now())
-    time.sleep(1)
+#dt_string = '2019-04-01 10:00'
+#print(dt_string)
+#print(datetime.datetime.strptime('2019-04-01 10:00','%Y-%m-%d %H:%M'))
 
-exit()
-
-
+#print(datetime.date.today())
+#for i in range(10):
+#    print(datetime.datetime.now())
+#    time.sleep(1)
 
 '''
 <div class="success">
