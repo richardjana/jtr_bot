@@ -71,7 +71,7 @@ def register(tournament_id,team_id,email):
     for i in range(len(d)):
         try:
             if d[i].split()[1] == 'class="success">':
-                return True
+                return d[i-1][20:-6] # name of the tournament
         except:
             continue
         try:
@@ -81,9 +81,19 @@ def register(tournament_id,team_id,email):
         except:
             continue
 
-def TEST_receive_mail_from_gmail():
+def get_link_from_gmail(tournament_name):
     # note: mails stay in inbox after reading. will have to works with the id, I guess ...
     # 'https://codehandbook.org/how-to-read-email-from-gmail-using-python/'
+    
+    ### email types freom jtr ('notify@turniere.jugger.org'):
+    # msg['subject']
+    # registration link: '<t_name> - Team anmelden - JTR | Jugger - Turniere - Ranglisten - <t_name>'
+    # registration confirmation: 'JTR | Jugger - Turniere - Ranglisten'
+    # update on tournament: 'JTR | Jugger - Turniere - Ranglisten - <t_name>'
+        
+    # msg['from'] # should be 'notify@turniere.jugger.org'
+    # msg['Received'] # time received email (+stuff); send time not accessible
+    # msg.get_payload()[0] # text, signature, stuff (my emails; JTR is string from the beginning)
     
     my_email = 'jtr.python@gmail.com'
     my_pwd = 'strenggeheim'
@@ -94,7 +104,7 @@ def TEST_receive_mail_from_gmail():
         mail = imaplib.IMAP4_SSL(smtp_server)
         mail.login(my_email,my_pwd)
     except:
-        print('mail login failed')
+        print('mail login failed') # should never happen
     
     mail.select('inbox') # search mail in inbox
     type,data = mail.search(None,'ALL')
@@ -103,21 +113,16 @@ def TEST_receive_mail_from_gmail():
     first_email_id = int(id_list[0])
     latest_email_id = int(id_list[-1])
     
-    for i in range(first_email_id,latest_email_id+1):
-            typ, data = mail.fetch(i, '(RFC822)' )
-            
+    for i in range(latest_email_id+1,first_email_id,-1):
+            typ, data = mail.fetch(i,'(RFC822)')
             for response_part in data:
                 if isinstance(response_part, tuple):
                     msg = email.message_from_string(response_part[1])
-                    email_subject = msg['subject']
-                    email_from = msg['from']
-                    #print('From : ' + email_from + '\n') # sent from; should be 'notify@turniere.jugger.org' -> check
-                    #print('Subject : ' + email_subject + '\n') -> identify right email with this?
-                    #print(msg.get_payload()[0]) # text, signature, stuff (my emails; JTR is string from the beginning)
-                    print(extract_link_from_text( str(msg.get_payload()) ))
-                    #print(msg['Received']) # time received email (+stuff); send time not accessible
-    
-    return 0
+                    if msg['subject'][:len(tournament_name)+1]==tournament_name: # mail to the correct tournament
+                        url = extract_link_from_text(str(msg.get_payload()))
+                        return click_email_link(url) # True if success, False if not
+
+    return False # email with link not found
 
 def send_mail_with_gmail():
     #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
@@ -133,7 +138,7 @@ def send_mail_with_gmail():
         mail = smtplib.SMTP_SSL(smtp_server,smtp_port)
         mail.login(my_email,my_pwd)
     except:
-        print('mail login failed')
+        print('mail login failed') # should never happen
     
     message_text = 'test message from python'
     subject = 'test mail'
@@ -156,12 +161,34 @@ def extract_link_from_text(message_text):
         pass
     
     return ''
-    
 
-def click_email_link():
-
+def click_email_link(url):
+    br = mechanize.Browser()
+    br.set_handle_robots(False)
     
-    return 0
+    # visit link
+    response = br.open(url)
+    
+    # check for success
+    with open('results.html','w') as f:
+        f.write(response.read())
+    
+    infile = open('results.html','r') # besser machen ohne file input output
+    d = infile.readlines()
+    infile.close()
+    os.remove('results.html')
+    for i in range(len(d)):
+        try:
+            if d[i].split()[1] == 'class="content">':
+                color_string = d[i].split()[3][:-3] # failed = #ff6666
+                break
+        except:
+            continue
+    
+    if color_string == '#ff6666':
+        return False
+    else:
+        return True
 
 def get_register_time_from_jtr(tournament_id):
     # maybe integrate with normal registering function?
@@ -190,8 +217,6 @@ def get_register_time_from_jtr(tournament_id):
         
     return datetime.datetime.now()-datetime.timedelta(days=1) # registration already open
     
-    
-
 def read_tournament_table(filename):
     infile = open(filename,'r') # besser machen ohne file input output
     lines = infile.readlines()
@@ -218,15 +243,11 @@ def read_tournament_table(filename):
     
 def wait_time(now,register_datetime): # return time to wait (in seconds)
     fac = 0.9
-    tot = 10
+    tot = 30
     
     time_from_now = (register_datetime-now).days*24*60*60+(register_datetime-now).seconds
     
     return int(time_from_now*fac)-tot
-
-### todo
-# check inbox and confirm link (to complete registration) geht eventuell auch ohne, ueber den "key" aus dem link == control_val ?
-# maybe have some kind of logfile?
 
 #https://docs.python.org/3/library/datetime.html
 
@@ -249,67 +270,41 @@ t_order = time_left.argsort() # sort for most urgent events
 
 # start waiting with checks for time, forwarding emails
 for i in range(len(tournamentID)): # for loop over future tournaments from list
-    # wait for some % (90%) of wait_time, repeat; aim for some (10) seconds before reg_time
+    # wait for some % (90%) of wait_time, repeat; aim for some (30) seconds before reg_time
     t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
-    while t > 0:
+    while t > 0: # what happens if registration is already open?
         time.sleep(t)
         t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
-    while register(tournament_id,team_id,email)==False:
+    tournament_name = register(tournament_id,team_id,email)
+    while tournament_name==False:
         time.sleep(1)
+        tournament_name = register(tournament_id,team_id,email)
     
-    # loop: wait some time, check for mail (verify the correct mail)
+    # loop: wait some time, check for mail (verify the correct mail with tournament name)
+    # use the link
+    confirm_link = get_link_from_gmail(tournament_name)
+    while confirm_link==False:
+        time.sleep(1)
+        confirm_link = get_link_from_gmail(tournament_name)
     
     
-    # use link
-    
+
+
+### open questions
+# Zeitumstellung wie handeln? Helfen da Zeitzonen?
+    # https://stackoverflow.com/questions/12203676/daylight-savings-time-in-python
+# Wie umgehen mit mehreren Teams auf einem Turnier? Passt das von alleine schon ganz gut? (denke ja)
+# An welcher Stelle email forwarding einbauen?
+
+### logfile fehlt noch
 
 
 
 
-#d = timedelta(microseconds=1010000)
-#print(d.total_seconds())
-
-#dt_string = '2019-04-01 10:00'
-#print(dt_string)
-#print(datetime.datetime.strptime('2019-04-01 10:00','%Y-%m-%d %H:%M'))
-
-#print(datetime.date.today())
-#for i in range(10):
-#    print(datetime.datetime.now())
-#    time.sleep(1)
-
+### teamIDs
 '''
-<div class="success">
-        <li>Es wurde eine Email mit dem Freigabeschl&uuml;ssel an die angegebene Adresse versendet.</li>
-<div class="advice">
-        <li>Es muss ein g&uuml;ltiger Wert in das Pr&uuml;ffeld eingegeben werden.</li> # oder andere Hinweise
-'''
-
-# <form action="/tournament.signin.php?id=445" method="post" id="signin">
-
-### neues Team
-# Teamname:
-# Land:
-# Stadt waehlen:
-# oder neue Stadt:
-'''
-<p><input type="hidden" name="control_val" value="174a9535b7fd93ceecbe1fc0392fa0f2" /></p> # benoetigt? aendert sich jedes mal
-<p><input class="input" type="text" name="team_name" value="" /> Team <span class="label">*</span><br />
-    <select class="input" name="co_select">
-        <option value="1">Deutschland</option>
-    </select> Land <span class="label">***</span><br />
-    <select class="input" name="city_select" style="width: 116px;">
-        <option value="13">Freiburg</option>
-        <option value="114">Karlsruhe</option>
-    </select> oder neu:
-    <input class="input" type="text" name="team_city" value="" style="width: 120px;" /> Stadt <span class="label">*</span></p>
-'''
-
-### bestehendes Team
-'''
-<p><select class="input" name="team_select">
 <option value="624">Deutschland - Freiburg - Flossenhauer</option>
 <option value="49">Deutschland - Freiburg - Gossenhauer</option>
 <option value="259">Deutschland - Freiburg - Gossenhauer 2</option>
@@ -318,14 +313,4 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
 <option value="61">Deutschland - Freiburg - Gossenhoschis</option>
 <option value="1124">Deutschland - Freiburg - Gossenkinder</option>
 <option value="487">Deutschland - Karlsruhe - TackleTiger</option>
-</select></p>
-'''
-
-### email
-### "captcha"
-### Anmelden button
-'''
-<p><input class="input" type="text" name="team_contact" value="" /> Email <span class="label">**</span><br />
-    10 + 4 = <input class="input" type="text" name="control" style="width: 25px;" /> # ja, hier steht das catcha als klartext drin
-    <input class="input" type="submit" name="signin" value="Anmelden" style="width: 100px;" /></p>
 '''
