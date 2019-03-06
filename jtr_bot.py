@@ -124,11 +124,40 @@ def get_link_from_gmail(tournament_name):
 
     return False # email with link not found
 
-def send_mail_with_gmail():
-    #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
-    #https://docs.python.org/3/library/email.utils.html#email.utils.formatdate
+def check_for_info_mail(last_check_datetime):
+    my_email = 'jtr.python@gmail.com'
+    my_pwd = 'strenggeheim'
+    smtp_server = 'imap.gmail.com'
+    smtp_port = 993
     
-    your_email = 'jtr.python@gmail.com'
+    try:
+        mail = imaplib.IMAP4_SSL(smtp_server)
+        mail.login(my_email,my_pwd)
+    except:
+        print('mail login failed') # should never happen
+    
+    mail.select('inbox') # search mail in inbox
+    type,data = mail.search(None,'ALL')
+    mail_ids = data[0]
+    id_list = mail_ids.split()
+    first_email_id = int(id_list[0])
+    latest_email_id = int(id_list[-1])
+    
+    msg_list = []
+    target_string = 'JTR | Jugger - Turniere - Ranglisten - '
+    for i in range(latest_email_id+1,first_email_id,-1):
+            typ, data = mail.fetch(i,'(RFC822)')
+            for response_part in data:
+                if isinstance(response_part, tuple):
+                    msg = email.message_from_string(response_part[1])
+                    if msg['subject'][:len(target_string)+1]==target_string: # info mail
+                        if msg['received']>=<:
+                            msg_list.append(msg)
+
+    return msg_list # empty if no new info mails
+
+def forward_mail(msg_list):
+    your_email = 'onkel.hotte@gmail.com'
     my_email = 'jtr.python@gmail.com'
     my_pwd = 'strenggeheim'
     smtp_server = 'smtp.gmail.com'
@@ -140,13 +169,10 @@ def send_mail_with_gmail():
     except:
         print('mail login failed') # should never happen
     
-    message_text = 'test message from python'
-    subject = 'test mail'
-    #date = 
-    #msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % (my_email,your_email,subject,date,message_text)
-    msg = "From: %s\nTo: %s\nSubject: %s\n\n%s" % (my_email,your_email,subject,message_text)
-    
-    mail.sendmail(my_email,your_email,msg)
+    for msg in msg_list:
+        #rewrite message (necessary?), send
+        fwd_msg = "From: %s\nTo: %s\nSubject: %s\n\n%s" % (my_email,your_email,msg['subject'],str(msg.get_payload()))
+        mail.sendmail(my_email,your_email,fwd_msg)
     mail.quit()
     
     return 0
@@ -282,8 +308,7 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
         time.sleep(1)
         tournament_name = register(tournament_id,team_id,email)
     
-    # loop: wait some time, check for mail (verify the correct mail with tournament name)
-    # use the link
+    # loop: wait some time, check for mail (verify the correct mail with tournament name), use the link
     confirm_link = get_link_from_gmail(tournament_name)
     while confirm_link==False:
         time.sleep(1)
@@ -305,12 +330,37 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
 
 ### teamIDs
 '''
-<option value="624">Deutschland - Freiburg - Flossenhauer</option>
-<option value="49">Deutschland - Freiburg - Gossenhauer</option>
-<option value="259">Deutschland - Freiburg - Gossenhauer 2</option>
-<option value="226">Deutschland - Freiburg - Gossenhauer Veteranen</option>
-<option value="52">Deutschland - Freiburg - Gossenhobbiz</option>
-<option value="61">Deutschland - Freiburg - Gossenhoschis</option>
-<option value="1124">Deutschland - Freiburg - Gossenkinder</option>
-<option value="487">Deutschland - Karlsruhe - TackleTiger</option>
+<option value="624">Deutschland - Freiburg - Flossenhauer
+<option value="49">Deutschland - Freiburg - Gossenhauer
+<option value="259">Deutschland - Freiburg - Gossenhauer 2
+<option value="1124">Deutschland - Freiburg - Gossenkinder
+<option value="487">Deutschland - Karlsruhe - TackleTiger
+'''
+'''
+def send_mail_with_gmail():
+    #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
+    #https://docs.python.org/3/library/email.utils.html#email.utils.formatdate
+    
+    your_email = 'jtr.python@gmail.com'
+    my_email = 'jtr.python@gmail.com'
+    my_pwd = 'strenggeheim'
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 465
+    
+    try:
+        mail = smtplib.SMTP_SSL(smtp_server,smtp_port)
+        mail.login(my_email,my_pwd)
+    except:
+        print('mail login failed') # should never happen
+    
+    message_text = 'test message from python'
+    subject = 'test mail'
+    #date = 
+    #msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % (my_email,your_email,subject,date,message_text)
+    msg = "From: %s\nTo: %s\nSubject: %s\n\n%s" % (my_email,your_email,subject,message_text)
+    
+    mail.sendmail(my_email,your_email,msg)
+    mail.quit()
+    
+    return 0
 '''
