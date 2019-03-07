@@ -10,3 +10,8 @@ todo:
  * use timezones to catch DST switch
  * forward emails (with updates on tournaments) to another email address
  * log activities
+
+requirements:
+ * pytz package for timezones
+ * mechanize package, web crawler, needs python2!
+ * time, datetime, pytz, webbrowser, smtplib, imaplib, email (part of python?)
