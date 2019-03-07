@@ -5,6 +5,7 @@ import numpy as np
 
 import time
 import datetime
+import pytz
 
 import webbrowser
 import mechanize
@@ -241,7 +242,7 @@ def get_register_time_from_jtr(tournament_id):
         except:
             continue
         
-    return datetime.datetime.now()-datetime.timedelta(days=1) # registration already open
+    return datetime.datetime.now(pytz.timezone('Europe/Berlin'))-datetime.timedelta(days=1) # registration already open; timedelta might not really work with timezones
     
 def read_tournament_table(filename):
     infile = open(filename,'r') # besser machen ohne file input output
@@ -278,7 +279,8 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
 #https://docs.python.org/3/library/datetime.html
 
 ### starting routine of bot
-start_time = datetime.datetime.now() # get current time
+start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
+log_file = 'jtr_bot.log'
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
 
@@ -297,10 +299,10 @@ t_order = time_left.argsort() # sort for most urgent events
 # start waiting with checks for time, forwarding emails
 for i in range(len(tournamentID)): # for loop over future tournaments from list
     # wait for some % (90%) of wait_time, repeat; aim for some (30) seconds before reg_time
-    t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
-    while t > 0: # what happens if registration is already open?
+    t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
+    while t > 0: # what happens if registration is already open? -> should work as normal?
         time.sleep(t)
-        t = wait_time(datetime.datetime.now(),reg_datetime[t_order[i]])
+        t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
     tournament_name = register(tournament_id,team_id,email)
@@ -318,12 +320,12 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
 
 
 ### open questions
-# Zeitumstellung wie handeln? Helfen da Zeitzonen?
-    # https://stackoverflow.com/questions/12203676/daylight-savings-time-in-python
+# Zeitumstellung wie handeln? Helfen da Zeitzonen? -> datetime.datetime.now(pytz.timezone('Europe/Berlin'))
+    # wie eigenen Ort / eigene Zeitzone herausfinden (bis dahin erstmal Berlin verwenden)
 # Wie umgehen mit mehreren Teams auf einem Turnier? Passt das von alleine schon ganz gut? (denke ja)
 # An welcher Stelle email forwarding einbauen?
 
-### logfile fehlt noch
+### logfile fehlt noch (also email periodically?)
 
 
 
