@@ -11,7 +11,6 @@ import webbrowser
 import mechanize
 
 import smtplib
-import time
 import imaplib
 import email
 
@@ -269,18 +268,19 @@ def read_tournament_table(filename):
     return tournamentID,teamID,date_estimate,time_estimate,comment
     
 def wait_time(now,register_datetime): # return time to wait (in seconds)
-    fac = 0.9
-    tot = 30
+    fac = 0.9 # %
+    tot = 30 # seconds
     
     time_from_now = (register_datetime-now).days*24*60*60+(register_datetime-now).seconds
     
     return int(time_from_now*fac)-tot
 
-#https://docs.python.org/3/library/datetime.html
+
 
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 log_file = 'jtr_bot.log'
+attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
 
@@ -296,6 +296,10 @@ time_left = time_left[time_left>0]
 
 t_order = time_left.argsort() # sort for most urgent events
 
+'''
+logg input and parameters, also test email servers (don't actually send?)
+'''
+
 # start waiting with checks for time, forwarding emails
 for i in range(len(tournamentID)): # for loop over future tournaments from list
     # wait for some % (90%) of wait_time, repeat; aim for some (30) seconds before reg_time
@@ -307,27 +311,36 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
     # start trying to register every second (or so); verify
     tournament_name = register(tournament_id,team_id,email)
     while tournament_name==False:
-        time.sleep(1)
+        time.sleep(attempt_sleep_time)
         tournament_name = register(tournament_id,team_id,email)
     
     # loop: wait some time, check for mail (verify the correct mail with tournament name), use the link
     confirm_link = get_link_from_gmail(tournament_name)
     while confirm_link==False:
-        time.sleep(1)
+        time.sleep(attempt_sleep_time)
         confirm_link = get_link_from_gmail(tournament_name)
     
     
 
-
+exit()
 ### open questions
 # Zeitumstellung wie handeln? Helfen da Zeitzonen? -> datetime.datetime.now(pytz.timezone('Europe/Berlin'))
     # wie eigenen Ort / eigene Zeitzone herausfinden (bis dahin erstmal Berlin verwenden)
 # Wie umgehen mit mehreren Teams auf einem Turnier? Passt das von alleine schon ganz gut? (denke ja)
-# An welcher Stelle email forwarding einbauen?
+# An welcher Stelle email forwarding einbauen? -> gar nicht! am besten einfach im gmail Postfach machen ...
 
 ### logfile fehlt noch (also email periodically?)
+### maximum number of failed attempts to jtr / gmail before stopping? -> for loop instead of while?
 
+#https://docs.python.org/3/library/datetime.html
 
+with open(log_file,'a') as log:
+        log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+
+# at start for new tournament: name of tournament + teamname (or IDs, if names to complicated)
+# waiting times
+# registration attempts (+success)
+# confimation attempts (+success)
 
 
 ### teamIDs
