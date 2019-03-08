@@ -14,4 +14,5 @@ todo:
 requirements:
  * pytz package for timezones
  * mechanize package, web crawler, needs python2!
+   transition to https://github.com/jmcarp/robobrowser instead?
  * time, datetime, pytz, webbrowser, smtplib, imaplib, email (part of python?)
