@@ -33,6 +33,8 @@ def register(tournament_id,team_id,email):
         #try:
         #    if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
         #        print(response_words[i+1].split()[3][7:-1])
+                #with open(log_file,'a') as log:
+                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
         #except:
         #    continue
         try:
@@ -57,6 +59,8 @@ def register(tournament_id,team_id,email):
     #    try:
     #        if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
     #            print(response_words[i+1][7:-1])
+                #with open(log_file,'a') as log:
+                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
     #    except:
     #        continue
     for i in range(len(response_words)):
@@ -82,6 +86,8 @@ def register(tournament_id,team_id,email):
         try:
             if response_words[i] == 'class="advice">':
                 #print(d[i+2].split()[5:-5]) # for logfile maybe
+                #with open(log_file,'a') as log:
+                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
                 return False
         except:
             continue
@@ -110,6 +116,8 @@ def get_link_from_gmail(tournament_name):
         mail.login(my_email,my_pwd)
     except:
         print('mail login failed') # should never happen # for logfile
+        #with open(log_file,'a') as log:
+         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
     
     mail.select('inbox') # search mail in inbox
     type,data = mail.search(None,'ALL')
@@ -217,7 +225,6 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int(time_from_now*fac)-tot
 
 
-
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 log_file = 'jtr_bot.log'
@@ -247,21 +254,30 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
     # wait for some % (90%) of wait_time, repeat; aim for some (30) seconds before reg_time
     t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     while t > 0: # what happens if registration is already open? -> should work as normal?
+        #with open(log_file,'a') as log: # wait for X time until tournament
+         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
         time.sleep(t)
         t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
     tournament_name = register(tournament_id,team_id,email)
     while tournament_name==False:
+        #with open(log_file,'a') as log: # JTR registration failed
+         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
         time.sleep(attempt_sleep_time)
         tournament_name = register(tournament_id,team_id,email)
+    #with open(log_file,'a') as log: # JTR registration success
+     #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
     
     # loop: wait some time, check for mail (verify the correct mail with tournament name), use the link
     confirm_link = get_link_from_gmail(tournament_name)
     while confirm_link==False:
+        #with open(log_file,'a') as log: # email confirmation failed
+         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
         time.sleep(attempt_sleep_time)
         confirm_link = get_link_from_gmail(tournament_name)
-    
+    #with open(log_file,'a') as log: # email confirmation success
+        #log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
     
 
 exit()
