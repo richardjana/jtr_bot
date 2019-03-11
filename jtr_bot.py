@@ -32,9 +32,8 @@ def register(tournament_id,team_id,email):
     for i in range(len(response_words)):
         #try:
         #    if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
-        #        print(response_words[i+1].split()[3][7:-1])
-                #with open(log_file,'a') as log:
-                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+                #with open('jtr_bot.log','a') as log:
+                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration page control_val = '+str(response_words[i+1][7:-1])+'\n')
         #except:
         #    continue
         try:
@@ -43,14 +42,19 @@ def register(tournament_id,team_id,email):
                 break
         except:
             continue
-        
-    # submit data to form
-    br.select_form(nr=0) # the first form, because it has no name
-    br['team_select'] = [str(team_id),]
-    br['team_contact'] = email
-    br['team_repeat'] = email
-    br['control'] = str(captcha_value)
-    response = br.submit()
+    
+    try:
+        # submit data to form
+        br.select_form(nr=0) # the first form, because it has no name
+        br['team_select'] = [str(team_id),]
+        br['team_contact'] = email
+        br['team_repeat'] = email
+        br['control'] = str(captcha_value)
+        response = br.submit()
+    except: # catch if registration not open yet
+        with open('jtr_bot.log','a') as log:
+            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration not open yet\n')
+        return False
     
     # check for success
     response_words = response.read().split()
@@ -58,35 +62,21 @@ def register(tournament_id,team_id,email):
     #for i in range(len(d)):
     #    try:
     #        if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
-    #            print(response_words[i+1][7:-1])
-                #with open(log_file,'a') as log:
-                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+                #with open('jtr_bot.log','a') as log:
+                 #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration return page control_val = '+str(response_words[i+1][7:-1])+'\n')
     #    except:
     #        continue
     for i in range(len(response_words)):
         try:
             if response_words[i] == 'class="success">':
-                for j in range(len(response_words)):
-                    try:
-                        if response_words[j][:7] == '<title>':
-                            tn_start = j
-                    except:
-                        continue
-                    try:
-                        if response_words[j] == 'Ranglisten</title>':
-                            tn_end = j
-                            break
-                    except:
-                        continue
-                
-                return ' '.join(response_words[tn_start:tn_end-10])[7:] # name of the tournament
+                return True # name of the tournament not necessary anymore, because this now comes from get_register_time_from_jtr
                     
         except:
             continue
         try:
             if response_words[i] == 'class="advice">':
                 #print(d[i+2].split()[5:-5]) # for logfile maybe
-                #with open(log_file,'a') as log:
+                #with open('jtr_bot.log','a') as log:
                  #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
                 return False
         except:
@@ -115,9 +105,8 @@ def get_link_from_gmail(tournament_name):
         mail = imaplib.IMAP4_SSL(smtp_server)
         mail.login(my_email,my_pwd)
     except:
-        print('mail login failed') # should never happen # for logfile
-        #with open(log_file,'a') as log:
-         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+        with open('jtr_bot.log','a') as log: # should never happen
+            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  login to imap server failed in get_link_from_gmail\n')
     
     mail.select('inbox') # search mail in inbox
     type,data = mail.search(None,'ALL')
@@ -204,7 +193,7 @@ def get_register_time_from_jtr(tournament_id):
     return t_name,datetime.datetime.now(pytz.timezone('Europe/Berlin'))-datetime.timedelta(days=1) # registration already open; timedelta might not really work with timezones
     
 def read_tournament_table(filename):
-    infile = open(filename,'r') # besser machen ohne file input output
+    infile = open(filename,'r')
     lines = infile.readlines()
     infile.close()
     
@@ -236,16 +225,23 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int(time_from_now*fac)-tot
 
 
+### dict with teamIDs : team names
+team_names = {  '49':'Gossenhauer',
+               '259':'Gossenhauer 2',
+               '487':'TackleTiger',
+               '624':'Flossenhauer',
+              '1124':'Gossenkinder'}
+
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
-log_file = 'jtr_bot.log'
+#log_file = 'jtr_bot.log'
 email = 'jtr.python@gmail.com'
 attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
 
 reg_datetime = [] # figure out registration times from jtr
-t_names = [] # also get name of tournament as string
+tournament_name = [] # also get name of tournament as string
 time_left = np.zeros(len(tournamentID)) # in seconds (should be good enough)
 for i in range(len(tournamentID)):
     tn, reg_time = get_register_time_from_jtr(tournamentID[i])
@@ -261,7 +257,7 @@ t_order = time_left.argsort() # sort for most urgent events
 
 '''
 logg input and parameters, also test email servers (don't actually send?)
-with open(log_file,'a') as log: # initialization; list of tournaments to register for
+with open('jtr_bot.log','w') as log: # initialization; list of tournaments to register for
     log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
 '''
 
@@ -270,30 +266,29 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
     # wait for some % (90%) of wait_time, repeat; aim for some (30) seconds before reg_time
     t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     while t > 0: # what happens if registration is already open? -> should work as normal?
-        #with open(log_file,'a') as log: # wait for X time until tournament
-         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+        with open('jtr_bot.log','a') as log: # wait for X time until tournament
+            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  waiting '+str(t)+' s ('+str(datetime.datetime.timedelta(seconds=t))+') for "'+str(tournament_name[t_order[i]])+'" at '+str(reg_datetime[t_order[i]])+'\n')
         time.sleep(t)
         t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
-    tournament_name = register(tournament_id,team_id,email)
-    while tournament_name==False:
-        #with open(log_file,'a') as log: # JTR registration failed
-         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+    register_success = register(tournament_id,team_id,email)
+    while register_success==False:
+        # if JTR registration failed, log is updated there
         time.sleep(attempt_sleep_time)
-        tournament_name = register(tournament_id,team_id,email)
-    #with open(log_file,'a') as log: # JTR registration success
-     #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+        register_success = register(tournament_id,team_id,email)
+    with open('jtr_bot.log','a') as log: # JTR registration success
+        log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" successful\n') # test if this is correct (indexing and stuff)
     
     # loop: wait some time, check for mail (verify the correct mail with tournament name), use the link
     confirm_link = get_link_from_gmail(tournament_name)
     while confirm_link==False:
-        #with open(log_file,'a') as log: # email confirmation failed
-         #   log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+        with open('jtr_bot.log','a') as log: # email confirmation failed
+            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  confirmation for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" failed\n')
         time.sleep(attempt_sleep_time)
         confirm_link = get_link_from_gmail(tournament_name)
-    #with open(log_file,'a') as log: # email confirmation success
-        #log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
+    with open('jtr_bot.log','a') as log: # email confirmation success
+        log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  confirmation for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" successful\n')
     
 
 
@@ -313,15 +308,6 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
 # registration attempts (+success)
 # confimation attempts (+success)
 
-
-### teamIDs
-'''
-<option value="624">Deutschland - Freiburg - Flossenhauer
-<option value="49">Deutschland - Freiburg - Gossenhauer
-<option value="259">Deutschland - Freiburg - Gossenhauer 2
-<option value="1124">Deutschland - Freiburg - Gossenkinder
-<option value="487">Deutschland - Karlsruhe - TackleTiger
-'''
 '''
 def send_mail_with_gmail():
     #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
