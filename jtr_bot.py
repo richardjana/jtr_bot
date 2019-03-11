@@ -62,29 +62,25 @@ def register(tournament_id,team_id,email):
     for i in range(len(response_words)):
         try:
             if response_words[i] == 'class="success">':
-                print('success')
                 for j in range(len(response_words)):
                     try:
-                        if response_words[j][:8] == '<title>':
-                            print(j)
+                        if response_words[j][:7] == '<title>':
                             tn_start = j
                     except:
                         continue
                     try:
                         if response_words[j] == 'Ranglisten</title>':
-                            print(j)
                             tn_end = j
+                            break
                     except:
                         continue
                 
-                print(' '.join(response_words[tn_start,tn_end-9])[8:])
-                return ' '.join(response_words[tn_start,tn_end-9])[8:] # name of the tournament
+                return ' '.join(response_words[tn_start:tn_end-10])[7:] # name of the tournament
                     
         except:
             continue
         try:
             if response_words[i] == 'class="advice">':
-                print('advice')
                 #print(d[i+2].split()[5:-5]) # for logfile maybe
                 return False
         except:
@@ -113,7 +109,7 @@ def get_link_from_gmail(tournament_name):
         mail = imaplib.IMAP4_SSL(smtp_server)
         mail.login(my_email,my_pwd)
     except:
-        print('mail login failed') # should never happen
+        print('mail login failed') # should never happen # for logfile
     
     mail.select('inbox') # search mail in inbox
     type,data = mail.search(None,'ALL')
@@ -152,17 +148,12 @@ def click_email_link(url):
     response = br.open(url)
     
     # check for success
-    with open('results.html','w') as f:
-        f.write(response.read())
-    
-    infile = open('results.html','r') # besser machen ohne file input output
-    d = infile.readlines()
-    infile.close()
-    os.remove('results.html')
-    for i in range(len(d)):
+    response_words = response.read().split()
+
+    for i in range(len(response_words)):
         try:
-            if d[i].split()[1] == 'class="content">':
-                color_string = d[i].split()[3][:-3] # failed = #ff6666
+            if response_words[i] == 'style="background-color:':
+                color_string = response_words[i+1][:7] # failed = #ff6666
                 break
         except:
             continue
@@ -180,20 +171,14 @@ def get_register_time_from_jtr(tournament_id):
     
     # get date and time to register
     response = br.open(url)
-    with open('results.html','w') as f:
-        f.write(response.read())
+    response_words = response.read().split()
     
-    infile = open('results.html','r') # besser machen ohne file input output
-    d = infile.readlines()
-    infile.close()
-    os.remove('results.html')
-    for i in range(len(d)):
+    for i in range(len(response_words)):
         try:
-            if d[i].split()[1] == 'class="content">':
-                date_string = d[i+1].split()[10]
-                time_string = d[i+1].split()[11]
-                # turn into datetime type
-                return datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M')
+            if response_words[i] == 'class="content">':
+                date_string = response_words[i+11]
+                time_string = response_words[i+12]
+                return datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M') # turn into datetime type
         except:
             continue
         
@@ -232,9 +217,6 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int(time_from_now*fac)-tot
 
 
-print(register('445','487','jtr.python@gmail.com'))
-
-exit()
 
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
