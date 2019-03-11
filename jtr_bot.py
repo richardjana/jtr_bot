@@ -27,55 +27,64 @@ def register(tournament_id,team_id,email):
     
     # solve captcha
     response = br.open(url)
-    with open('results.html','w') as f:
-        f.write(response.read())
-    
-    infile = open('results.html','r') # besser machen ohne file input output
-    d = infile.readlines()
-    infile.close()
-    os.remove('results.html')
-    for i in range(len(d)):
+    response_words = response.read().split()
+
+    for i in range(len(response_words)):
         #try:
-        #    if d[i].split()[2] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
-        #        print(d[i].split()[3][7:-1])
+        #    if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
+        #        print(response_words[i+1].split()[3][7:-1])
         #except:
         #    continue
         try:
-            if d[i].split()[7] == 'name="control"':
-                captcha_value = solve_captcha(d[i].split()[0],d[i].split()[1],d[i].split()[2])
+            if response_words[i] == 'name="control"':
+                captcha_value = solve_captcha(response_words[i-7],response_words[i-6],response_words[i-5])
                 break
         except:
             continue
         
     # submit data to form
     br.select_form(nr=0) # the first form, because it has no name
-    br['team_select'] = [team_id,]
+    br['team_select'] = [str(team_id),]
     br['team_contact'] = email
+    br['team_repeat'] = email
     br['control'] = str(captcha_value)
-    res = br.submit()
+    response = br.submit()
     
     # check for success
-    with open('results_submit.html','w') as f: # besser machen ohne file input output
-        f.write(res.read())
-    
-    infile = open('results_submit.html','r')
-    d = infile.readlines()
-    infile.close()
-    os.remove('results_submit.html')
+    response_words = response.read().split()
+
     #for i in range(len(d)):
     #    try:
-    #        if d[i].split()[2] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
-    #            print(d[i].split()[3][7:-1])
+    #        if response_words[i] == 'name="control_val"': # not sure what control_val is used for; maybe put into logfile?
+    #            print(response_words[i+1][7:-1])
     #    except:
     #        continue
-    for i in range(len(d)):
+    for i in range(len(response_words)):
         try:
-            if d[i].split()[1] == 'class="success">':
-                return d[i-1][20:-6] # name of the tournament
+            if response_words[i] == 'class="success">':
+                print('success')
+                for j in range(len(response_words)):
+                    try:
+                        if response_words[j][:8] == '<title>':
+                            print(j)
+                            tn_start = j
+                    except:
+                        continue
+                    try:
+                        if response_words[j] == 'Ranglisten</title>':
+                            print(j)
+                            tn_end = j
+                    except:
+                        continue
+                
+                print(' '.join(response_words[tn_start,tn_end-9])[8:])
+                return ' '.join(response_words[tn_start,tn_end-9])[8:] # name of the tournament
+                    
         except:
             continue
         try:
-            if d[i].split()[1] == 'class="advice">':
+            if response_words[i] == 'class="advice">':
+                print('advice')
                 #print(d[i+2].split()[5:-5]) # for logfile maybe
                 return False
         except:
@@ -223,10 +232,14 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int(time_from_now*fac)-tot
 
 
+print(register('445','487','jtr.python@gmail.com'))
+
+exit()
 
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 log_file = 'jtr_bot.log'
+email = 'jtr.python@gmail.com'
 attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
