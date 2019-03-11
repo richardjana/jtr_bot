@@ -183,14 +183,25 @@ def get_register_time_from_jtr(tournament_id):
     
     for i in range(len(response_words)):
         try:
+            if response_words[j][:7] == '<title>':
+                tn_start = j
+        except:
+            continue
+        try:
+            if response_words[j] == 'Ranglisten</title>':
+                tn_end = j
+                t_name = ' '.join(response_words[tn_start:tn_end-10])[7:] # name of the tournament
+        except:
+            continue
+        try:
             if response_words[i] == 'class="content">':
                 date_string = response_words[i+11]
                 time_string = response_words[i+12]
-                return datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M') # turn into datetime type
+                return t_name,datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M') # turn into datetime type
         except:
             continue
         
-    return datetime.datetime.now(pytz.timezone('Europe/Berlin'))-datetime.timedelta(days=1) # registration already open; timedelta might not really work with timezones
+    return t_name,datetime.datetime.now(pytz.timezone('Europe/Berlin'))-datetime.timedelta(days=1) # registration already open; timedelta might not really work with timezones
     
 def read_tournament_table(filename):
     infile = open(filename,'r') # besser machen ohne file input output
@@ -234,9 +245,12 @@ attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('/home/richard/Documents/jtr_bot/tournament_data.txt') # read registration list
 
 reg_datetime = [] # figure out registration times from jtr
+t_names = [] # also get name of tournament as string
 time_left = np.zeros(len(tournamentID)) # in seconds (should be good enough)
 for i in range(len(tournamentID)):
-    reg_datetime.append(get_register_time_from_jtr(tournamentID[i]))
+    tn, reg_time = get_register_time_from_jtr(tournamentID[i])
+    reg_datetime.append(reg_time)
+    t_names.append(tn)
     time_left[i] = (reg_datetime[i]-start_time).days*24*60*60+(reg_datetime[i]-start_time).seconds
 
 tournamentID = tournamentID[time_left>0] # remove events from the past
@@ -247,6 +261,8 @@ t_order = time_left.argsort() # sort for most urgent events
 
 '''
 logg input and parameters, also test email servers (don't actually send?)
+with open(log_file,'a') as log: # initialization; list of tournaments to register for
+    log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
 '''
 
 # start waiting with checks for time, forwarding emails
@@ -280,7 +296,7 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
         #log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
     
 
-exit()
+
 ### open questions
 # Zeitumstellung wie handeln? Helfen da Zeitzonen? -> datetime.datetime.now(pytz.timezone('Europe/Berlin'))
     # wie eigenen Ort / eigene Zeitzone herausfinden (bis dahin erstmal Berlin verwenden)
@@ -291,9 +307,6 @@ exit()
 ### maximum number of failed attempts to jtr / gmail before stopping? -> for loop instead of while?
 
 #https://docs.python.org/3/library/datetime.html
-
-with open(log_file,'a') as log:
-        log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  ')
 
 # at start for new tournament: name of tournament + teamname (or IDs, if names to complicated)
 # waiting times
