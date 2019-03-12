@@ -268,26 +268,26 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
     t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     while t > 0: # what happens if registration is already open? -> should work as normal?
         with open('jtr_bot.log','a') as log: # wait for X time until tournament
-            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  waiting '+str(t)+' s ('+str(datetime.datetime.timedelta(seconds=t))+') for "'+str(tournament_name[t_order[i]])+'" at '+str(reg_datetime[t_order[i]])+'\n')
+            log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  waiting '+str(t)+' s ('+str(datetime.timedelta(seconds=t))+') for "'+str(tournament_name[t_order[i]])+'" at '+str(reg_datetime[t_order[i]])+'\n')
         time.sleep(t)
         t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
-    register_success = register(tournament_id,team_id,email)
+    register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],email)
     while register_success==False:
         # if JTR registration failed, log is updated there
         time.sleep(attempt_sleep_time)
-        register_success = register(tournament_id,team_id,email)
+        register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],email)
     with open('jtr_bot.log','a') as log: # JTR registration success
         log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" successful\n')
     
     # loop: wait some time, check for mail (verify the correct mail with tournament name), use the link
-    confirm_link = get_link_from_gmail(tournament_name)
+    confirm_link = get_link_from_gmail(tournament_name[t_order[i]])
     while confirm_link==False:
         with open('jtr_bot.log','a') as log: # email confirmation failed
             log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  confirmation for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" failed\n')
         time.sleep(attempt_sleep_time)
-        confirm_link = get_link_from_gmail(tournament_name)
+        confirm_link = get_link_from_gmail(tournament_name[t_order[i]])
     with open('jtr_bot.log','a') as log: # email confirmation success
         log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  confirmation for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" successful\n')
     
