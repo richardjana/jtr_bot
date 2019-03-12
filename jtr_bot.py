@@ -186,7 +186,7 @@ def get_register_time_from_jtr(tournament_id):
             if response_words[i] == 'class="content">':
                 date_string = response_words[i+11]
                 time_string = response_words[i+12]
-                return t_name,datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M') # turn into datetime type
+                return t_name,pytz.timezone('Europe/Berlin').localize(datetime.datetime.strptime(date_string+' '+time_string,'%Y-%m-%d %H:%M')) # turn into datetime type, aware of Berlin tz
         except:
             continue
         
