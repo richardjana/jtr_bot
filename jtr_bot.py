@@ -115,7 +115,7 @@ def get_link_from_gmail(tournament_name):
     first_email_id = int(id_list[0])
     latest_email_id = int(id_list[-1])
     
-    for i in range(latest_email_id+1,first_email_id,-1):
+    for i in range(latest_email_id,first_email_id-1,-1):
             typ, data = mail.fetch(i,'(RFC822)')
             for response_part in data:
                 if isinstance(response_part, tuple):
