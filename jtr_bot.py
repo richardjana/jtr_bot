@@ -20,7 +20,7 @@ def solve_captcha(i,op,j):
     if op=='-':
         return int(i)-int(j)
 
-def register(tournament_id,team_id,email):
+def register(tournament_id,team_id,my_email):
     url = 'https://turniere.jugger.org/tournament.signin.php?id='+str(tournament_id)
     br = mechanize.Browser()
     br.set_handle_robots(False) # ignore robots
@@ -47,8 +47,8 @@ def register(tournament_id,team_id,email):
         # submit data to form
         br.select_form(nr=0) # the first form, because it has no name
         br['team_select'] = [str(team_id),]
-        br['team_contact'] = email
-        br['team_repeat'] = email
+        br['team_contact'] = my_email
+        br['team_repeat'] = my_email
         br['control'] = str(captcha_value)
         response = br.submit()
     except: # catch if registration not open yet
@@ -117,12 +117,11 @@ def get_link_from_gmail(tournament_name):
     
     for i in range(latest_email_id,first_email_id-1,-1):
             typ, data = mail.fetch(i,'(RFC822)')
-            for response_part in data:
-                if isinstance(response_part, tuple):
-                    msg = email.message_from_string(response_part[1])
-                    if msg['subject'][:len(tournament_name)+1]==tournament_name: # mail to the correct tournament
-                        url = extract_link_from_text(str(msg.get_payload()))
-                        return click_email_link(url) # True if success, False if not
+            if isinstance(data[0][1], tuple):
+                msg = email.message_from_string(data[0][1])
+                if msg['subject'][:len(tournament_name)+1]==tournament_name: # mail to the correct tournament
+                    url = extract_link_from_text(str(msg.get_payload()))
+                    return click_email_link(url) # True if success, False if not
 
     return False # email with link not found
 
@@ -150,7 +149,7 @@ def click_email_link(url):
     for i in range(len(response_words)):
         try:
             if response_words[i] == 'style="background-color:':
-                color_string = response_words[i+1][:7] # failed = #ff6666
+                color_string = response_words[i+1][:7] # failed = #ff6666, success = #99ff99
                 break
         except:
             continue
@@ -237,7 +236,7 @@ team_names = {  '49':'Gossenhauer',
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 #log_file = 'jtr_bot.log'
-email = 'jtr.python@gmail.com'
+my_email = 'jtr.python@gmail.com'
 attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('./tournament_data.txt') # read registration list
@@ -273,11 +272,11 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
         t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),reg_datetime[t_order[i]])
     
     # start trying to register every second (or so); verify
-    register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],email)
+    register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],my_email)
     while register_success==False:
         # if JTR registration failed, log is updated there
         time.sleep(attempt_sleep_time)
-        register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],email)
+        register_success = register(tournamentID[t_order[i]],teamID[t_order[i]],my_email)
     with open('jtr_bot.log','a') as log: # JTR registration success
         log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  registration for "'+str(tournament_name[t_order[i]])+'" with team "'+str(team_names[str(teamID[t_order[i]])])+'" successful\n')
     
