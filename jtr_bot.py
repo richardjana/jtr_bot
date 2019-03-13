@@ -239,7 +239,9 @@ team_names = {  '49':'Gossenhauer',
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 #log_file = 'jtr_bot.log'
 test_email = 'jtr.python@gmail.com'
-my_email = 'gossentiger@gmail.com'
+my_email = 'gossentiger@gmail.com' # could make this into global variables, I guess, but won't do for now
+test_pwd = 'strenggeheim'
+my_pwd = 'verystrenggeheim!'
 attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('./tournament_data.txt') # read registration list
