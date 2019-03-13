@@ -51,3 +51,30 @@ def forward_mail(msg_list):
     mail.quit()
     
     return 0
+
+def send_mail_with_gmail():
+    #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
+    #https://docs.python.org/3/library/email.utils.html#email.utils.formatdate
+    
+    your_email = 'jtr.python@gmail.com'
+    my_email = 'jtr.python@gmail.com'
+    my_pwd = 'strenggeheim'
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 465
+    
+    try:
+        mail = smtplib.SMTP_SSL(smtp_server,smtp_port)
+        mail.login(my_email,my_pwd)
+    except:
+        print('mail login failed') # should never happen
+    
+    message_text = 'test message from python'
+    subject = 'test mail'
+    #date = 
+    #msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % (my_email,your_email,subject,date,message_text)
+    msg = "From: %s\nTo: %s\nSubject: %s\n\n%s" % (my_email,your_email,subject,message_text)
+    
+    mail.sendmail(my_email,your_email,msg)
+    mail.quit()
+    
+    return 0
