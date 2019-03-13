@@ -96,8 +96,10 @@ def get_link_from_gmail(tournament_name):
     # msg['Received'] # time received email (+stuff); send time not accessible
     # msg.get_payload()[0] # text, signature, stuff (my emails; JTR is string from the beginning)
     
-    my_email = 'jtr.python@gmail.com'
-    my_pwd = 'strenggeheim'
+    test_email = 'jtr.python@gmail.com'
+    my_email = 'gossentiger@gmail.com'
+    test_pwd = 'strenggeheim'
+    my_pwd = 'verystrenggeheim!'
     smtp_server = 'imap.gmail.com'
     smtp_port = 993
     
@@ -236,7 +238,8 @@ team_names = {  '49':'Gossenhauer',
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
 #log_file = 'jtr_bot.log'
-my_email = 'jtr.python@gmail.com'
+test_email = 'jtr.python@gmail.com'
+my_email = 'gossentiger@gmail.com'
 attempt_sleep_time = 1 # seconds between attempts to jtr website / gmail
 
 tournamentID,teamID,date_estimate,time_estimate,comment = read_tournament_table('./tournament_data.txt') # read registration list
@@ -297,32 +300,3 @@ for i in range(len(tournamentID)): # for loop over future tournaments from list
 
 ### also email logfile periodically?
 ### maximum number of failed attempts to jtr / gmail before stopping? -> for loop instead of while?
-
-'''
-def send_mail_with_gmail():
-    #https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
-    #https://docs.python.org/3/library/email.utils.html#email.utils.formatdate
-    
-    your_email = 'jtr.python@gmail.com'
-    my_email = 'jtr.python@gmail.com'
-    my_pwd = 'strenggeheim'
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = 465
-    
-    try:
-        mail = smtplib.SMTP_SSL(smtp_server,smtp_port)
-        mail.login(my_email,my_pwd)
-    except:
-        print('mail login failed') # should never happen
-    
-    message_text = 'test message from python'
-    subject = 'test mail'
-    #date = 
-    #msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % (my_email,your_email,subject,date,message_text)
-    msg = "From: %s\nTo: %s\nSubject: %s\n\n%s" % (my_email,your_email,subject,message_text)
-    
-    mail.sendmail(my_email,your_email,msg)
-    mail.quit()
-    
-    return 0
-'''
