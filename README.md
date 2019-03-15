@@ -12,6 +12,8 @@ todo:
  * quit trying to register after some fixed number of attempts
  * log error message when registration fails
  * periodically do something to show that the script is still running?
+ * change waiting parameters (90% -> 75% or even 50%)?
+ * send email with attached logfile between sleep() commands?
 
 requirements:
  * pytz package for timezones
