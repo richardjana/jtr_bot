@@ -37,3 +37,8 @@ def process_html_tournament_table(filename):
         data.append([rank,team_name,n_tournaments,score])
     
     return data, last_update_datetime
+
+
+# rank / score of a team / the best x teams over time
+
+# some form of statistic on score: average among top teams, threashold for topX positions, total (sum) score, ...?
