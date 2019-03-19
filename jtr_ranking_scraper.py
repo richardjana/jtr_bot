@@ -43,7 +43,7 @@ with open(log_file,'w') as log:
 
 try:
     os.mkdir(dir_name)
-except FileExistsError:
+except:
     print('Raw data directory already existed. Writing into it.')
 
 time.sleep(wait_noon_midnight())
