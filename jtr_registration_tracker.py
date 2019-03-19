@@ -107,7 +107,7 @@ with open(log_file,'w') as log:
 
 try:
     os.mkdir(dir_name)
-except FileExistsError:
+except:
     print('Raw data directory already existed. Writing into it.')
 
 t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),register_time)
