@@ -91,7 +91,7 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int((time_from_now-tot)*fac)
 
 ### params
-tournamentID = 481 # Jena 2019
+tournamentID = 494 # Muenster  #481 # Jena 2019
 url = 'https://turniere.jugger.org/tournament.php?id='+str(tournamentID)
 log_file = 'jtr_registration_tracker.log'
 dir_name = 'registration_tracker-raw_data-'+str(tournamentID)
@@ -112,7 +112,7 @@ except FileExistsError:
 
 t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),register_time)
 while t > 0:
-    with open('jtr_bot.log','a') as log: # wait for X time until tournament
+    with open(log_file,'a') as log: # wait for X time until tournament
         log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  waiting '+str(t)+' s ('+str(datetime.timedelta(seconds=t))+') for "'+str(tournament_name)+'" at '+str(register_time)+'\n')
     time.sleep(t)
     t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),register_time)
@@ -142,5 +142,5 @@ ax.plot(times,n_teams,'ko-')
 #ax.plot([0,np.max(times)],[capacity,capacity],'k:') # waiting list limit
 plt.xlabel('time after registration [s]')
 plt.ylabel('number of teams registered')
-plt.savefig(dir_name'/evolution.png')
+plt.savefig(dir_name+'/evolution.png')
 plt.close()
