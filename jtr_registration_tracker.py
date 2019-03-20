@@ -95,8 +95,8 @@ tournamentID = 494 # Muenster  #481 # Jena 2019
 url = 'https://turniere.jugger.org/tournament.php?id='+str(tournamentID)
 log_file = 'jtr_registration_tracker.log'
 dir_name = 'registration_tracker-raw_data-'+str(tournamentID)
-sample_wait = 1 # second (is this too close to a DOS attack?)
-track_time = 10*60 # 10 minutes
+sample_wait = 60 # second (is this too close to a DOS attack?)
+track_time = 1*60*60 # 1 hour
 
 ### initialize: start log-file; create raw data directory; wait for start of registration
 # get tournament name and start datetime from jtr
