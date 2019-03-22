@@ -5,5 +5,7 @@ TournamentID TeamID registration_date(estimate) registration_date(estimate) comm
 482 624 2019-04-01 10:00 Bamberg-Flossenhauer
 494 49 2019-04-01 00:00 Muenster-Gossenhauer
 460 49 2019-04-01 13:00 Dresden-Gossenhauer
-496 49 2019-40-01 00:00 Nuernberg-Gossenhauer
-496 624 2019-40-01 00:00 Nuernberg-Flossenhauer
+496 49 2019-04-01 00:00 Nuernberg-Gossenhauer
+496 624 2019-04-01 00:00 Nuernberg-Flossenhauer
+498 49 2019-06-01 23:58 Mainz-Gossenhauer
+498 624 2019-06-01 23:58 Mainz-Flossenhauer
