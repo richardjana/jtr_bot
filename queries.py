@@ -31,6 +31,8 @@ def process_html_tournament_table(filename):
     data = [] # (u'...' strings)
     for entry in entries: # rank, team name, number of tournaments, score
         rank = entry.find_all('td')[0].get_text()[:-1]
+        if rank=='': # fix empty rank when teams are tied
+            rank = data[-1][0]
         team_name = entry.find_all('td')[2].get_text()
         n_tournaments = entry.find_all('td')[4].get_text()
         score = entry.find_all('td')[5].get_text()
@@ -77,13 +79,13 @@ def plot_team_progression(directory,team_name_list):
     ax1.set_xlabel('time')
     ax1.set_ylabel('rank')
     for j,team_name in enumerate(team_name_list):
-        ax1.plot(range(len(rank[:,0])),rank[:,j],'-ko',label=team_name)
+        ax1.plot(range(len(rank[:,0])),rank[:,j],'-o',label=team_name)
     ax1.legend(loc='best')
     
     ax2.set_xlabel('time')
     ax2.set_ylabel('score')
     for j,team_name in enumerate(team_name_list):
-        ax2.plot(range(len(score[:,0])),score[:,j],'-ko',label=team_name)
+        ax2.plot(range(len(score[:,0])),score[:,j],'-o',label=team_name)
     ax2.legend(loc='best')
     ax2.set_ylim((0,None))
     
@@ -118,7 +120,7 @@ def plot_score_top_x(directory,x):
     
 
 
-plot_team_progression('/home/richard/Documents/jtr_ranking_scrape/ranking_scraper-raw_data/',['Rigor Mortis','Zonenkinder','Gossenhauer','TackleTiger'])   
+plot_team_progression('/home/richard/Documents/jtr_ranking_scrape/ranking_scraper-raw_data/',['Rigor Mortis','Zonenkinder','Gossenhauer','TackleTiger','Seven Sins'])   
 #plot_score_top_x('/home/richard/Documents/jtr_ranking_scrape/ranking_scraper-raw_data/',8)
 
 
