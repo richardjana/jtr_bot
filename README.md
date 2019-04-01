@@ -25,3 +25,8 @@ requirements:
  * set up new gmail account
  * go to google acoount page -> security -> allow unsecure tech
  * set up forwarding (probably best without filter)
+
+ 
+ reading tournament table -> logfile:
+ * sort by registration datetime
+ * add a note what is going to happen with each event
