@@ -119,13 +119,18 @@ def get_link_from_gmail(tournament_name):
     
     for i in range(latest_email_id,first_email_id-1,-1):
             typ, data = mail.fetch(i,'(RFC822)')
-            if isinstance(data[0][1], tuple):
-                msg = email.message_from_string(data[0][1])
-                if msg['subject'][:len(tournament_name)+1]==tournament_name: # mail to the correct tournament
-                    url = extract_link_from_text(str(msg.get_payload()))
-                    return click_email_link(url) # True if success, False if not
+            msg = email.message_from_string(data[0][1])
+            if test_mail_subject(msg['subject'],tournament_name): # mail to the correct tournament
+                url = extract_link_from_text(str(msg.get_payload()))
+                return click_email_link(url) # True if success, False if not
 
     return False # email with link not found
+
+def test_mail_subject(subject,tournament_name):
+    for i in range(len(subject)-50,5,-1):
+        if subject[:i]==subject[-i:]: # is an email with registration link
+            if subject[:3]==tournament_name[:3]: # for the correct tournament (HOT FIX)
+                return True
 
 def extract_link_from_text(message_text):
     target_string = 'http://turniere.jugger.org/activate.php'
@@ -220,7 +225,7 @@ def read_tournament_table(filename):
     return tournamentID,teamID,date_estimate,time_estimate,comment
     
 def wait_time(now,register_datetime): # return time to wait (in seconds)
-    fac = 0.9 # %
+    fac = 0.75 # %
     tot = 30 # seconds
     
     time_from_now = (register_datetime-now).days*24*60*60+(register_datetime-now).seconds
