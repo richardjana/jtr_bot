@@ -30,3 +30,4 @@ requirements:
  reading tournament table -> logfile:
  * sort by registration datetime
  * add a note what is going to happen with each event
+ * maybe some old tournaments get in the way of upcoming ones, ... and then fail repeatedly
