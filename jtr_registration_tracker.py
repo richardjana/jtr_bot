@@ -20,18 +20,26 @@ def process_registration_html(filename):
     with open(filename) as fp:
         soup = BeautifulSoup(fp,'html.parser')
     
-    registered_entries = soup.find_all('table')[1].find_all('tr')
-    waiting_entries = soup.find_all('table')[2].find_all('tr')
-    
     data = []
-    for entry in registered_entries: # position, team name
-        position = entry.find_all('td')[0].get_text()[:-1]
-        team_name = entry.find_all('td')[1].get_text()
-        data.append([position,team_name])
-    for entry in waiting_entries: # position, team name
-        position = entry.find_all('td')[0].get_text()[:-1]
-        team_name = entry.find_all('td')[1].get_text()
-        data.append([position,team_name])
+    
+    try:
+        registered_entries = soup.find_all('table')[1].find_all('tr')
+        for entry in registered_entries: # position, team name
+            position = entry.find_all('td')[0].get_text()[:-1]
+            team_name = entry.find_all('td')[1].get_text()
+            data.append([position,team_name])
+        
+    except:
+        return data
+    
+    try:
+        waiting_entries = soup.find_all('table')[2].find_all('tr')
+        for entry in waiting_entries: # position, team name
+            position = entry.find_all('td')[0].get_text()[:-1]
+            team_name = entry.find_all('td')[1].get_text()
+            data.append([position,team_name])
+    except:
+        return data
     
     return data
 
@@ -131,7 +139,7 @@ n_teams = np.zeros(len(files_list))
 for i,filename in enumerate(files_list):
     tdelta = scrape_datetime_from_filename(filename)-register_time
     times[i] = tdelta.seconds+tdelta.microseconds/1000.0 # time after registration opened
-    n_teams[i] = len(process_registration_html(filename)[:,0])
+    n_teams[i] = len(process_registration_html(filename))
 
 # sort by time
 n_teams = n_teams[times.argsort()]
@@ -140,7 +148,7 @@ times = times[times.argsort()]
 fig,ax = plt.subplots(dpi=100)
 ax.plot(times,n_teams,'ko-')    
 #ax.plot([0,np.max(times)],[capacity,capacity],'k:') # waiting list limit
-plt.xlabel('time after registration [s]')
+plt.xlabel('time after registration [s]') # axis scaling should be different I guess
 plt.ylabel('number of teams registered')
 plt.savefig(dir_name+'/evolution.png')
 plt.close()
