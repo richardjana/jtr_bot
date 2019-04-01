@@ -99,12 +99,12 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int((time_from_now-tot)*fac)
 
 ### params
-tournamentID = 482 # Bamberg  #481 # Jena 2019
+tournamentID = 481 # Jena 2019
 url = 'https://turniere.jugger.org/tournament.php?id='+str(tournamentID)
 log_file = 'jtr_registration_tracker.log'
 dir_name = 'registration_tracker-raw_data-'+str(tournamentID)
-sample_wait = 60 # second (is this too close to a DOS attack?)
-track_time = 1*60*60 # 1 hour
+sample_wait = 1 # second (is this too close to a DOS attack?)
+track_time = 15*60 # 15 minutes
 
 ### initialize: start log-file; create raw data directory; wait for start of registration
 # get tournament name and start datetime from jtr
@@ -146,7 +146,7 @@ n_teams = n_teams[times.argsort()]
 times = times[times.argsort()]
 
 fig,ax = plt.subplots(dpi=100)
-ax.plot(times,n_teams,'ko-')    
+ax.semilogx(times,n_teams,'ko-')    
 #ax.plot([0,np.max(times)],[capacity,capacity],'k:') # waiting list limit
 plt.xlabel('time after registration [s]') # axis scaling should be different I guess
 plt.ylabel('number of teams registered')
