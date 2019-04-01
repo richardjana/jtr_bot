@@ -91,7 +91,7 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
     return int((time_from_now-tot)*fac)
 
 ### params
-tournamentID = 494 # Muenster  #481 # Jena 2019
+tournamentID = 482 # Bamberg  #481 # Jena 2019
 url = 'https://turniere.jugger.org/tournament.php?id='+str(tournamentID)
 log_file = 'jtr_registration_tracker.log'
 dir_name = 'registration_tracker-raw_data-'+str(tournamentID)
@@ -118,7 +118,7 @@ while t > 0:
     t = wait_time(datetime.datetime.now(pytz.timezone('Europe/Berlin')),register_time)
 
 ### keep downloading every <sample_wait> for <track_time>
-for i in range(np.ceil(track_time/sample_wait)):
+for i in range(int(np.ceil(track_time/sample_wait))):
     output_file = scrape_source(url)
     with open(log_file,'a') as log:
         log.write(str(datetime.datetime.now(pytz.timezone('Europe/Berlin')))+' :  "'+str(url)+'" downloaded to"'+str(output_file)+'"\n')
