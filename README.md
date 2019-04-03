@@ -31,3 +31,7 @@ requirements:
  * sort by registration datetime
  * add a note what is going to happen with each event
  * maybe some old tournaments get in the way of upcoming ones, ... and then fail repeatedly
+
+ 
+ encoding special characters in logfile:
+ * probably with codecs.open(....,encoding='utf-8') somehow, but did not work on the spot...
