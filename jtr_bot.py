@@ -129,9 +129,8 @@ def get_link_from_gmail(tournament_name):
     return False # email with link not found
 
 def test_mail_subject(subject,tournament_name):
-    # unescape HTML once more to be sure?
     #subject = HTMLParser().unescape(subject)
-    #tournament_name = HTMLParser().unescape(tournament_name)
+    tournament_name = HTMLParser().unescape(tournament_name)
     
     if subject[:len(tournament_name)]==tournament_name:
         if subject[-len(tournament_name):]==tournament_name:
@@ -190,7 +189,7 @@ def get_register_time_from_jtr(tournament_id):
         try:
             if response_words[i] == 'Ranglisten</title>':
                 tn_end = i
-                t_name = HTMLParser().unescape(' '.join(response_words[tn_start:tn_end-10])[7:]) # name of the tournament
+                t_name = ' '.join(response_words[tn_start:tn_end-10])[7:] # name of the tournament
                 break
         except:
             continue
@@ -243,7 +242,8 @@ team_names = {  '49':'Gossenhauer',
                '259':'Gossenhauer 2',
                '487':'TackleTiger',
                '624':'Flossenhauer',
-              '1124':'Gossenkinder'}
+              '1124':'Gossenkinder',
+              '792':'TEST'}
 
 ### starting routine of bot
 start_time = datetime.datetime.now(pytz.timezone('Europe/Berlin')) # get current time
