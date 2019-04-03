@@ -14,6 +14,8 @@ import smtplib
 import imaplib
 import email
 
+from HTMLParser import HTMLParser
+
 def solve_captcha(i,op,j):
     if op=='+':
         return int(i)+int(j)
@@ -127,10 +129,13 @@ def get_link_from_gmail(tournament_name):
     return False # email with link not found
 
 def test_mail_subject(subject,tournament_name):
-    for i in range(len(subject)-50,5,-1):
-        if subject[:i]==subject[-i:]: # is an email with registration link
-            if subject[:3]==tournament_name[:3]: # for the correct tournament (HOT FIX)
-                return True
+    # unescape HTML once more to be sure?
+    #subject = HTMLParser().unescape(subject)
+    #tournament_name = HTMLParser().unescape(tournament_name)
+    
+    if subject[:len(tournament_name)]==tournament_name:
+        if subject[-len(tournament_name):]==tournament_name:
+            return True
 
 def extract_link_from_text(message_text):
     target_string = 'http://turniere.jugger.org/activate.php'
@@ -185,7 +190,7 @@ def get_register_time_from_jtr(tournament_id):
         try:
             if response_words[i] == 'Ranglisten</title>':
                 tn_end = i
-                t_name = ' '.join(response_words[tn_start:tn_end-10])[7:] # name of the tournament
+                t_name = HTMLParser().unescape(' '.join(response_words[tn_start:tn_end-10])[7:]) # name of the tournament
                 break
         except:
             continue
