@@ -25,12 +25,36 @@ def get_register_time_from_jtr(tournament_id):
 t_names = []
 
 
-wrong_name = u'12. Th&uuml;ringer Meisterschaft'
+wrong_name = '12. Th&uuml;ringer Meisterschaft'
 right_name = u'12. Th\xfcringer Meisterschaft'
+
+email_subject = u'12. Th\xfcringer Meisterschaft - Team anmelden - JTR | Jugger - Turniere - Ranglisten - 12. Th\xfcringer Meisterschaft'
+wrong_email_subject = '12. Th&uuml;ringer Meisterschaft - Team anmelden - JTR | Jugger - Turniere - Ranglisten - 12. Th&uuml;ringer Meisterschaft'
 
 
 from HTMLParser import HTMLParser
 h = HTMLParser()
+
+wrong_unescaped = HTMLParser().unescape(wrong_name)
+if email_subject[:len(wrong_unescaped)]==wrong_unescaped:
+    if email_subject[-len(wrong_unescaped):]==wrong_unescaped:
+        print('wrong_unescaped')
+
+if email_subject[:len(right_name)]==right_name:
+    if email_subject[-len(right_name):]==right_name:
+        print('right')
+
+wes_unescaped = HTMLParser().unescape(wrong_email_subject)
+if wes_unescaped[:len(wrong_unescaped)]==wrong_unescaped:
+    if wes_unescaped[-len(wrong_unescaped):]==wrong_unescaped:
+        print('wrong_unescaped wrong_unescaped')
+
+if wes_unescaped[:len(right_name)]==right_name:
+    if wes_unescaped[-len(right_name):]==right_name:
+        print('wrong_unescaped right')
+
+
+exit()
 
 wrong_name_unescaped = h.unescape(wrong_name)
 
