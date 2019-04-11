@@ -101,10 +101,10 @@ def wait_time(now,register_datetime): # return time to wait (in seconds)
 ### params
 tournamentID = 481 # Jena 2019
 url = 'https://turniere.jugger.org/tournament.php?id='+str(tournamentID)
-log_file = 'jtr_registration_tracker.log'
 dir_name = 'registration_tracker-raw_data-'+str(tournamentID)
+log_file = dir_name+'/jtr_registration_tracker.log'
 sample_wait = 1 # second (is this too close to a DOS attack?)
-track_time = 15*60 # 15 minutes
+track_time = 60*60 # 15 minutes
 
 ### initialize: start log-file; create raw data directory; wait for start of registration
 # get tournament name and start datetime from jtr
